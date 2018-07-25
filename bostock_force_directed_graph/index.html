@@ -29,7 +29,7 @@ svg {
   background-color: #eee;
 }
 </style>
-<svg width="700" height="700"></svg>
+<svg width="900" height="900"></svg>
 <button onclick="window.activateBrush()">Brush</button>
 <button onclick="window.deactivateBrush()">Turn off Brush</button>
 <script src="https://d3js.org/d3.v4.min.js"></script>
@@ -40,14 +40,15 @@ var svg = d3.select("svg"),
     height = +svg.attr("height");
 
 var color = d3.scaleOrdinal(d3.schemeCategory20);
-
+const forceX = d3.forceX(width / 2).strength(0.005)
+const forceY = d3.forceY(height / 2).strength(0.005)
 var simulation = d3.forceSimulation()
+    .force('x', forceX)
+    .force('y',  forceY)
     .force("link", d3.forceLink().id(function(d) {
-      console.log(d);
-      console.log('d.id is: ', d.id);
       return d.id
     }))
-    .force("charge", d3.forceManyBody())
+    .force("charge", d3.forceManyBody().strength(-30))
     .force("center", d3.forceCenter(width / 2, height / 2));
 
 d3.json("tm2.json", function(error, graph) {
