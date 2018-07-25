@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <style>
+  .node {
+    fill: #ccc;
+    stroke: #fff;
+    stroke-width: 2px;
+  }
+  .link {
+    stroke: #777;
+    stroke-width: 2px;
+  }
+  </style>
+</head>
+<body>
+  <script src="//d3js.org/d3.v3.min.js"></script>
+  <script>
+  // set a width and height for our svg
+  const width = 640;
+  const height = 480;
+  const nodes = [
+    { name: 'Alice' },
+    { name: 'Bob' },
+    { name: 'Eve' },
+  ];
+  const links = [
+    { source: 0, target: 1},
+    { source: 1, target: 2},
+    { source: 2, target: 0},
+  ];
+  // add svg to the body for our graph
+
+  const svg = d3.select('body')
+                .append('svg')
+                .attr('width', width)
+                .attr('height', height);
+
+  // add our nodes
+  const node = svg.selectAll('.node')
+                .data(nodes)
+                .enter().append('circle')
+                .attr('class', 'node')
+                .attr('cx', (d, i) => (i + 1)*(width/4))
+                .attr('cy', (d, i) => height/2)
+                .attr('r', width * 0.05);
+  const link = svg.selectAll('.link')
+                .data(links)
+                .enter().append('line')
+                .attr('class', 'link')
+  // create the force layout graph
+  const force = d3.layout.force()
+                  .size([width, height])
+                  .nodes(nodes)
+                  .links(links)
+                  .on('tick', tick)
+                  .linkDistance(width / 2)
+                  .start();
+  function tick() {
+    node.attr('cx', d => d.x)
+      .attr('cy', d => d.y)
+      .call(force.drag);
+    link.attr('x1', d => d.source.x)
+      .attr('y1', d => d.source.y)
+      .attr('x2', d => d.target.x)
+      .attr('y2', d => d.target.y)
+  }
+
+  </script>
+</body>
+</html>

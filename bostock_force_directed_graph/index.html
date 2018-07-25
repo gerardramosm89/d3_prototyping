@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+.links line {
+  stroke: orange;
+  /* stroke-opacity: 0.6; */
+}
+
+.nodes circle {
+  stroke: #fff;
+  stroke-width: 1.5px;
+}
+
+.node {
+  stroke: #fff;
+  stroke-width: 1.5px;
+}
+
+.node.selected {
+  stroke: red;
+}
+
+.link {
+  /* stroke: #999; */
+}
+
+svg {
+  background-color: #eee;
+}
+</style>
+<svg width="700" height="700"></svg>
+<button onclick="window.activateBrush()">Brush</button>
+<button onclick="window.deactivateBrush()">Turn off Brush</button>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script>
+
+var svg = d3.select("svg"),
+    width = +svg.attr("width"),
+    height = +svg.attr("height");
+
+var color = d3.scaleOrdinal(d3.schemeCategory20);
+
+var simulation = d3.forceSimulation()
+    .force("link", d3.forceLink().id(function(d) {
+      console.log(d);
+      console.log('d.id is: ', d.id);
+      return d.id
+    }))
+    .force("charge", d3.forceManyBody())
+    .force("center", d3.forceCenter(width / 2, height / 2));
+
+d3.json("tm2.json", function(error, graph) {
+  if (error) throw error;
+  console.log('graph is: ', graph);
+  window.graph = graph;
+  // Scales
+  const x = d3.scaleLinear()
+              .domain([-418.44180282039173, 1112.4943739554676])
+              .range([0, width - 100]);
+  const y = d3.scaleLinear()
+              .domain([-551.2128763840085, 994.110043165467])
+              .range([0, height - 100]);
+  window.x = x;
+  window.y = y;
+  var link = svg.append("g")
+    .attr("class", "links")
+    .selectAll("line")
+    .data(graph.links)
+    .enter().append("line")
+    .style('stroke','orange')
+    .attr("stroke-width", function(d) {
+      return 1;
+    });
+
+  var node = svg.append("g")
+    .selectAll("circle")
+    .data(graph.nodes)
+    .enter().append("circle")
+      .attr("r", 5)
+      .attr("cx", d => x(d.x))
+      .attr("cy", d => y(d.y))
+      .attr("class", d => `nodes node`)
+      .attr("id", d => `${d.id}`)
+      .attr("fill", function(d) { return color(d.group); })
+      .call(d3.drag()
+          .on("start", dragstarted)
+          .on("drag", dragged)
+          .on("end", dragended));
+
+  node.append("title")
+      .text(function(d) { return d.id; });
+ 
+  simulation
+      .nodes(graph.nodes)
+      .on("tick", ticked);
+
+  simulation.force("link")
+      .links(graph.links);
+
+  function ticked() {
+    link
+        .attr("x1", function(d) { return x(d.source.x); })
+        .attr("y1", function(d) { return y(d.source.y); })
+        .attr("x2", function(d) { return x(d.target.x); })
+        .attr("y2", function(d) { return y(d.target.y); });
+
+    node
+        .attr("cx", function(d) { return x(d.x); })
+        .attr("cy", function(d) { return y(d.y); });
+  }
+
+
+  window.activateBrush =  function() {
+    var brush = svg.append("g")
+    .attr("class", "brush")
+    .call(d3.brush()
+      .extent([[0, 0], [width, height]])
+      .on("start end", brushed));
+  }
+
+  window.deactivateBrush = function() {
+    document.querySelector('.brush').remove()
+  }
+  function brushed() {
+    console.log('____________');
+    var selection = d3.event.selection;
+    node.classed("selected", selection && function(d) {
+      if (selection[0][0] <= x(d.x) && x(d.x) < selection[1][0]
+          && selection[0][1] <= y(d.y) && y(d.y) < selection[1][1]) {
+            console.log(d.id);
+          }
+      else {
+      }
+      return selection[0][0] <= x(d.x) && x(d.x) < selection[1][0]
+          && selection[0][1] <= y(d.y) && y(d.y) < selection[1][1];
+    });
+  }
+});
+
+function dragstarted(d) {
+  if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+  d.fx = d.x;
+  d.fy = d.y;
+}
+
+function dragged(d) {
+  d.fx = d3.event.x;
+  d.fy = d3.event.y;
+}
+
+function dragended(d) {
+  if (!d3.event.active) simulation.alphaTarget(0);
+  d.fx = null;
+  d.fy = null;
+}
+
+</script>
